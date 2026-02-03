@@ -9,10 +9,9 @@ The housing API routes come in Part 3 — that's where DRF views enter the pictu
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # Part 3 adds:
-    # path('api/', include('housing.urls')),
+    path("api/", include("housing.urls")),  #  added in Part 3 -
 ]
