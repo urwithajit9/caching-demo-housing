@@ -107,7 +107,28 @@ In Part 1, visit the listings page. Open your **Browser DevTools > Network Tab**
 └── README.md               # Documentation
 
 ```
+## Block Diagram of the Project Architecture
+```mermaid
+graph TD
+    subgraph Browser_Client [User Tier]
+        U[End User Browser]
+    end
 
+    subgraph Docker_Compose [Application Tier]
+        NextJS[Frontend: Next.js]
+        Django[Backend: Django DRF]
+    end
+
+    subgraph Data_Tier [Storage Tier]
+        Postgres[(PostgreSQL DB)]
+        Redis[(Redis Cache)]
+    end
+
+    U <--> |Port 3000| NextJS
+    NextJS <--> |Internal API Call| Django
+    Django <--> |Port 5432| Postgres
+    Django <--> |Port 6379| Redis
+```
 
 
 ---
@@ -121,14 +142,16 @@ To add the next part of the tutorial:
 3. Update the README locally if specific new environment variables are added.
 4. Push to GitHub: `git push origin part-2-drf-caching`
 
-```
+-----
 
----
+
 
 ### One-Click Setup Files
 To make the above README work, ensure these two files are also in your root:
 
 **1. `docker-compose.yml`** (Root)
+
+
 ```yaml
 services:
   db:
@@ -168,7 +191,9 @@ services:
 
 ```
 
-**2. `backend/Dockerfile**`
+---
+
+**2. `backend/Dockerfile`**
 
 ```dockerfile
 FROM python:3.11-slim
@@ -179,4 +204,5 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+```
 
