@@ -4,6 +4,7 @@ Django==5.2.10
 django-cors-headers==4.9.0
 django-redis==6.0.0
 djangorestframework==3.16.1
+Faker==40.1.2
 psycopg2-binary==2.9.11
 redis==7.1.0
 sqlparse==0.5.5
