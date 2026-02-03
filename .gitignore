@@ -142,4 +142,15 @@ vite.config.ts.timestamp-*
 
 
 # python
-venv
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+
+# Node.js
+frontend/node_modules/
+frontend/.next/
+
+# Databases & Environment
+.env
+db.sqlite3
