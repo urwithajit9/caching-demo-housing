@@ -1,10 +1,12 @@
 services:
   db:
     image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: housing_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
 
@@ -14,16 +16,17 @@ services:
       - "6379:6379"
 
   backend:
-    build: ./backend
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgres://user:password@db:5432/housing_db
-    depends_on:
-      - db
-      - redis
+      build: ./backend
+      volumes:
+        - ./backend:/app
+      ports:
+        - "8000:8000"
+      environment:
+        - DATABASE_URL=${DATABASE_URL}
+        - REDIS_URL=${REDIS_URL}
+      depends_on:
+        - db
+        - redis
 
   frontend:
     build: ./frontend
@@ -36,3 +39,6 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - backend
+
+volumes:
+  postgres_data:

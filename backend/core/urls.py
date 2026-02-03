@@ -1,22 +1,18 @@
 """
-URL configuration for core project.
+core/urls.py
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+The URL router. Every HTTP request hits this file first.
+Django reads the urlpatterns list top-to-bottom and stops at the first match.
+
+Right now we have one route: the admin panel.
+The housing API routes come in Part 3 — that's where DRF views enter the picture.
 """
+
 from django.contrib import admin
 from django.urls import path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Part 3 adds:
+    # path('api/', include('housing.urls')),
 ]

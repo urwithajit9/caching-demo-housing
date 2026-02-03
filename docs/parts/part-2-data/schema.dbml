@@ -1,0 +1,88 @@
+// =============================================
+// PART 2: The Naive Baseline
+// Zero indexes (except PKs). No optimizations.
+// Everything here is a deliberate slow path.
+// =============================================
+
+Table locations {
+  id integer [primary key, increment]
+  city varchar [not null]
+  state varchar(2)
+  zip_code varchar(10)
+  country varchar [default: 'US']
+
+  // NO indexes. City searches will full-table-scan.
+  // We add the index in Part 3 and show the difference.
+}
+
+Table offices {
+  id integer [primary key, increment]
+  name varchar [not null]
+  address varchar
+  city varchar
+  phone varchar
+
+  // Second hop in the N+1 chain: Property → Agent → Office
+}
+
+Table agents {
+  id integer [primary key, increment]
+  name varchar [not null]
+  email varchar
+  phone varchar
+  office_id integer [not null]
+
+  // First hop in the N+1 chain: Property → Agent
+  // No index on office_id. Every agent→office lookup is a scan.
+}
+
+Ref: agents.office_id > offices.id
+
+Table properties {
+  id integer [primary key, increment]
+  title varchar [not null]
+  description text
+  property_type varchar [not null, note: 'Apartment, House, Villa, Studio, Condo']
+  price decimal(12,2) [not null]
+  bedrooms integer [default: 1]
+  bathrooms integer [default: 1]
+  location_id integer [not null]
+  agent_id integer [not null]
+  status varchar [default: 'available', note: 'available, pending, sold — cache invalidation target']
+  view_count integer [default: 0, note: 'Cache-aside pattern target. Hot read, rare write.']
+  is_published boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  // NO indexes beyond PK.
+  // price, property_type, location_id, agent_id, status —
+  // all filtered by the frontend. All full-table-scans right now.
+  // That's the point. Part 3 fixes it.
+}
+
+Ref: properties.location_id > locations.id
+Ref: properties.agent_id > agents.id
+
+// =============================================
+// IMAGE LAYER
+// This is the surface for image caching,
+// CDN integration (Cloudinary / ImageKit),
+// and thumbnail/placeholder strategies.
+// =============================================
+
+Table property_images {
+  id integer [primary key, increment]
+  property_id integer [not null]
+  original_url varchar [not null, note: 'The raw uploaded image URL']
+  thumbnail_url varchar [note: 'Generated thumbnail. Null until first request (lazy).']
+  cdn_url varchar [note: 'The CDN-served URL after upload to Cloudinary/ImageKit. Null until processed.']
+  display_order integer [default: 0, note: 'Sort order on the listing page. 0 = cover image.']
+  alt_text varchar
+  created_at timestamp [default: `now()`]
+
+  // No index on property_id.
+  // Fetching images for a listing page = full scan on this table.
+  // Another thing Part 3 fixes.
+}
+
+Ref: property_images.property_id > properties.id
