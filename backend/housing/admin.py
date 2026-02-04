@@ -59,11 +59,11 @@ class PropertyAdmin(admin.ModelAdmin):
 @admin.register(PropertyImage)
 class PropertyImageAdmin(admin.ModelAdmin):
     list_display = [
-        "property",
+        "listing",
         "display_order",
         "original_url",
         "cdn_url",
         "thumbnail_url",
     ]
-    list_select_related = ["property"]
-    ordering = ["property", "display_order"]
+    list_select_related = ["listing"]
+    ordering = ["listing", "display_order"]

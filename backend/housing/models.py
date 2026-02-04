@@ -51,7 +51,7 @@ class Office(models.Model):
     name = models.CharField(max_length=150)
     address = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100, blank=True)
-    phone = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
 
     class Meta:
         verbose_name_plural = "offices"
@@ -73,7 +73,7 @@ class Office(models.Model):
 class Agent(models.Model):
     name = models.CharField(max_length=150)
     email = models.EmailField(blank=True)
-    phone = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
     office = models.ForeignKey(
         Office,
         on_delete=models.SET_NULL,
@@ -198,7 +198,7 @@ class Property(models.Model):
 # Fetching all images for a property = full table scan on this table.
 # =============================================================================
 class PropertyImage(models.Model):
-    property = models.ForeignKey(
+    listing = models.ForeignKey(
         Property,
         on_delete=models.CASCADE,
         related_name="images",
@@ -216,7 +216,7 @@ class PropertyImage(models.Model):
         verbose_name_plural = "property images"
 
     def __str__(self):
-        return f"Image {self.display_order} for {self.property.title}"
+        return f"Image {self.display_order} for {self.listing.title}"
 
     @builtins.property
     def best_url(self):

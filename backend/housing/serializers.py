@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import Location, Office, Agent, Property, PropertyImage
+from .models import Location, Office, Agent, Property
 
 
 class OfficeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Office
-        fields = ["id", "name", "city"]
+        fields = ["id", "name", "city", "phone"]
 
 
 class AgentSerializer(serializers.ModelSerializer):
@@ -13,13 +13,13 @@ class AgentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Agent
-        fields = ["id", "name", "email", "office"]
+        fields = ["id", "name", "email", "phone", "office"]
 
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ["id", "city", "state"]
+        fields = ["id", "city", "state", "zip_code"]
 
 
 class PropertySerializer(serializers.ModelSerializer):
@@ -31,6 +31,7 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "title",
+            "description",
             "property_type",
             "price",
             "bedrooms",
