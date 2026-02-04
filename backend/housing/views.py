@@ -40,19 +40,42 @@ class CachedPropertyListView(PropertyListView):
         return super().dispatch(*args, **kwargs)
 
 
+# class OptimizedPropertyListView(generics.ListAPIView):
+#     """
+#     The database-optimized version. No cache, but uses select_related
+#     to fetch Property + Agent + Office in a single query with JOINs
+#     instead of 41 separate queries.
+
+#     This is a preview of Part 4. We're including it here so you can
+#     compare "fast cache" vs "fast database" side by side.
+#     """
+
+#     queryset = (
+#         Property.objects.select_related("agent__office", "location")
+#         .all()
+#         .order_by("-created_at")
+#     )
+#     serializer_class = PropertySerializer
+
+
 class OptimizedPropertyListView(generics.ListAPIView):
     """
-    The database-optimized version. No cache, but uses select_related
-    to fetch Property + Agent + Office in a single query with JOINs
-    instead of 41 separate queries.
+    The database-optimized version. Uses select_related to fetch
+    Property + Location + Agent + Office in a single query with JOINs.
 
-    This is a preview of Part 4. We're including it here so you can
-    compare "fast cache" vs "fast database" side by side.
+    This is what "fast without cache" looks like.
+    61 queries → 1 query.
+    80ms → 15-20ms.
     """
 
-    queryset = (
-        Property.objects.select_related("agent__office", "location")
-        .all()
-        .order_by("-created_at")
-    )
     serializer_class = PropertySerializer
+
+    def get_queryset(self):
+        return (
+            Property.objects.select_related(
+                "location",  # JOIN on property.location_id = location.id
+                "agent__office",  # Double underscore: JOIN agent, then JOIN office
+            )
+            .all()
+            .order_by("-created_at")
+        )

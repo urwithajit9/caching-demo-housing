@@ -17,3 +17,10 @@ from django.apps import AppConfig
 class HousingConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "housing"
+
+    def ready(self):
+      """
+        Called when Django starts up.
+        This is where we import signals to register them.
+      """
+      import housing.signals  # noqa

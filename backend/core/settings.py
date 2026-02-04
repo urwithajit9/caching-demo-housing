@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # --- Third-party (installed via pip, registered here) ---
     "rest_framework",  # Django REST Framework — the API layer
     "corsheaders",  # CORS — lets Next.js on :3000 talk to this on :8000
+    "debug_toolbar",
     # --- Our apps ---
     "housing",  # The housing portal domain app
 ]
@@ -67,6 +68,7 @@ INSTALLED_APPS = [
 # decided to reject the request. The browser never sees them.
 # =============================================================================
 MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -238,3 +240,13 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "loggers": {"django.db.backends": {"level": "DEBUG", "handlers": ["console"]}},
 }
+
+# This allows the toolbar to show up when running in Docker
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+import socket
+
+hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+INTERNAL_IPS += [ip[:-1] + "1" for ip in ips]
