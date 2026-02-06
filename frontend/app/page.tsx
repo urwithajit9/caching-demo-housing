@@ -1,64 +1,133 @@
-import Image from "next/image";
+/**
+ * app/page.tsx
+ *
+ * Client Component using SWR for data fetching and caching.
+ */
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+"use client";
+
+import useSWR from "swr";
+import { useSearchParams } from "next/navigation";
+import { PaginatedResponse, Property } from "@/types/property";
+import { PropertyCard } from "@/components/PropertyCard";
+import { FilterBar } from "@/components/FilterBar";
+import { Pagination } from "@/components/Pagination";
+
+export default function HomePage() {
+  const searchParams = useSearchParams();
+
+  // Build the endpoint URL with current filters
+  const params = new URLSearchParams();
+  const type = searchParams.get("type");
+  const city = searchParams.get("city");
+  const minPrice = searchParams.get("min_price");
+  const maxPrice = searchParams.get("max_price");
+  const page = searchParams.get("page");
+
+  if (type) params.set("property_type", type);
+  if (city) params.set("location__city", city);
+  if (minPrice) params.set("price__gte", minPrice);
+  if (maxPrice) params.set("price__lte", maxPrice);
+  if (page) params.set("page", page);
+
+  const queryString = params.toString();
+  const endpoint = `/api/properties/cached/${queryString ? `?${queryString}` : ""}`;
+
+  // SWR hook - fetches data and handles caching
+  const { data, error, isLoading, isValidating } =
+    useSWR<PaginatedResponse<Property>>(endpoint);
+
+
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Loading properties...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg font-semibold">
+            Failed to load properties
           </p>
+          <p className="text-gray-600 mt-2">Please try again later.</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </div>
+    );
+  }
+
+  // Data loaded successfully
+  if (!data) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Housing Portal
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {data.count.toLocaleString()} properties available
+              </p>
+            </div>
+
+            {/* Cache status indicator - ADD THIS */}
+            {isValidating && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span>Refreshing...</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Filter bar */}
+        <FilterBar />
+
+        {/* Results */}
+        {data.count === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">
+              No properties match your filters.
+            </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Try adjusting your search criteria.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Grid of property cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data.results.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+
+            {/* Pagination info */}
+            <Pagination
+              count={data.count}
+              next={data.next}
+              previous={data.previous}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <div className="mt-8 text-center text-gray-600">
+              Showing {data.results.length} of {data.count} properties
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

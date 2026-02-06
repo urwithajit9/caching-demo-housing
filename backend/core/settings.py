@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "rest_framework",  # Django REST Framework — the API layer
     "corsheaders",  # CORS — lets Next.js on :3000 talk to this on :8000
     "debug_toolbar",
+    "django_filters",
     # --- Our apps ---
     "housing",  # The housing portal domain app
 ]
