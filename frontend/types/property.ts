@@ -27,6 +27,15 @@ export interface Agent {
   office: Office;
 }
 
+export interface PropertyImage {
+  id: number;
+  original_url: string;
+  thumbnail_url: string;
+  webp_url: string;
+  display_order: number;
+  alt_text: string;
+}
+
 export interface Property {
   id: number;
   title: string;
@@ -40,6 +49,7 @@ export interface Property {
   status: "available" | "pending" | "sold";
   view_count: number;
   created_at: string; // ISO 8601 date string
+  images: PropertyImage[];
 }
 
 // PaginatedResponse<T> is a generic interface. It works with any type.

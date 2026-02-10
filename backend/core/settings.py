@@ -256,24 +256,24 @@ import socket
 hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
 INTERNAL_IPS += [ip[:-1] + "1" for ip in ips]
 
-# """
-# - Reads the Cloudinary credentials from environment variables
-# - Configures the SDK with those credentials
-# - Sets `DEFAULT_FILE_STORAGE` so any Django `ImageField` or `FileField` automatically uploads to Cloudinary instead of saving to local disk
-# """
+"""
+- Reads the Cloudinary credentials from environment variables
+- Configures the SDK with those credentials
+- Sets `DEFAULT_FILE_STORAGE` so any Django `ImageField` or `FileField` automatically uploads to Cloudinary instead of saving to local disk
+"""
 
-# CLOUDINARY_STORAGE = {
-#     "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
-#     "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
-#     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
-# }
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
+}
 
 
-# cloudinary.config(
-#     cloud_name=CLOUDINARY_STORAGE["CLOUD_NAME"],
-#     api_key=CLOUDINARY_STORAGE["API_KEY"],
-#     api_secret=CLOUDINARY_STORAGE["API_SECRET"],
-#     secure=True,  # Use HTTPS
-# )
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE["CLOUD_NAME"],
+    api_key=CLOUDINARY_STORAGE["API_KEY"],
+    api_secret=CLOUDINARY_STORAGE["API_SECRET"],
+    secure=True,  # Use HTTPS
+)
 
-# DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"

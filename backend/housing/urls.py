@@ -1,5 +1,10 @@
 from django.urls import path
-from .views import PropertyListView, CachedPropertyListView, OptimizedPropertyListView
+from .views import (
+    PropertyListView,
+    CachedPropertyListView,
+    OptimizedPropertyListView,
+    PropertyDetailView,
+)
 
 urlpatterns = [
     path("properties/live/naive/", PropertyListView.as_view(), name="property-naive"),
@@ -11,4 +16,5 @@ urlpatterns = [
         OptimizedPropertyListView.as_view(),
         name="property-optimized",
     ),
+    path("properties/<int:pk>/", PropertyDetailView.as_view(), name="property-detail"),
 ]

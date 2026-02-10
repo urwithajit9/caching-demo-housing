@@ -8,6 +8,8 @@ Three views of the same data:
 """
 
 from django.utils.decorators import method_decorator
+from django.db.models import Count
+
 from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.filters import SearchFilter
@@ -21,15 +23,23 @@ class PropertyListView(generics.ListAPIView):
     The naive baseline. No caching. No query optimization.
     This is the "before" picture.
     """
-    queryset = Property.objects.all().order_by("-created_at")
+    # queryset = Property.objects.all().order_by("-created_at")
     serializer_class = PropertySerializer
     # Pagination is handled by DRF settings (default 20)
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["property_type", "status", "location__city"]
     search_fields = ["title", "description"]
 
+    def get_queryset(self):
+        return (
+            Property.objects.select_related("location", "agent__office")
+            .prefetch_related("images")
+            .all()
+            .order_by("-created_at")
+        )
 
-class CachedPropertyListView(PropertyListView):
+
+class CachedPropertyListView(generics.ListAPIView):
     """
     The cached version. Same queryset as PropertyListView, but with
     @cache_page(60) applied. This caches the entire HTTP response
@@ -38,6 +48,29 @@ class CachedPropertyListView(PropertyListView):
     First request: cache miss, hits the database, saves to Redis.
     Subsequent requests: cache hit, served from Redis, zero DB queries.
     """
+
+    serializer_class = PropertySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ["property_type", "status", "location__city"]
+    search_fields = ["title", "description"]
+
+    # def get_queryset(self):
+    #     return (
+    #         Property.objects.select_related("location", "agent__office")
+    #         .prefetch_related("images")
+    #         .all()
+    #         .order_by("-created_at")
+    #     )
+
+    # every property in the response has at least one image
+    def get_queryset(self):
+        return (
+            Property.objects.select_related("location", "agent__office")
+            .prefetch_related("images")
+            .annotate(image_count=Count("images"))
+            .filter(image_count__gt=0)
+            .order_by("-created_at")
+        )
 
     # Cache this specific view for 60 seconds
     @method_decorator(cache_page(60))
@@ -84,6 +117,21 @@ class OptimizedPropertyListView(generics.ListAPIView):
                 "location",  # JOIN on property.location_id = location.id
                 "agent__office",  # Double underscore: JOIN agent, then JOIN office
             )
+            .prefetch_related("images")
             .all()
             .order_by("-created_at")
         )
+
+
+class PropertyDetailView(generics.RetrieveAPIView):
+    """
+    Retrieve a single property by ID.
+    Returns all images, not just the first one.
+    """
+
+    queryset = (
+        Property.objects.select_related("location", "agent__office")
+        .prefetch_related("images")
+        .all()
+    )
+    serializer_class = PropertySerializer

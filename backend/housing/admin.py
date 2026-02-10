@@ -34,6 +34,28 @@ class AgentAdmin(admin.ModelAdmin):
     list_select_related = ["office"]  # Prevents N+1 in the admin itself
 
 
+class PropertyImageInline(admin.TabularInline):
+    """
+    Inline admin for uploading multiple images per property.
+    Shows as a table below the property form.
+    """
+
+    model = PropertyImage
+    extra = 3  # Show 3 empty upload slots by default
+    fields = ["image", "display_order", "alt_text"]
+
+    # Optional: show thumbnail preview in admin
+    readonly_fields = ["image_preview"]
+
+    def image_preview(self, obj):
+        """Display a small thumbnail in the admin list"""
+        if obj.image:
+            return f'<img src="{obj.get_thumbnail_url(100, 75)}" />'
+        return "No image"
+
+    image_preview.allow_tags = True
+
+
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
     list_display = [
@@ -52,18 +74,27 @@ class PropertyAdmin(admin.ModelAdmin):
     list_filter = ["property_type", "status", "is_published"]
     search_fields = ["title", "description"]
     ordering = ["-created_at"]
-    # Admin uses select_related internally for FK fields in list_display.
-    # This is fine — admin is not the performance target. The API is.
+    list_select_related = ["location", "agent"]
+
+    # Add the inline ↓
+    inlines = [PropertyImageInline]
+
+
+# @admin.register(PropertyImage)
+# class PropertyImageAdmin(admin.ModelAdmin):
+#     list_display = [
+#         "listing",
+#         "display_order",
+#         # "original_url",
+#         # "cdn_url",
+#         # "thumbnail_url",
+#     ]
+#     list_select_related = ["listing"]
+#     ordering = ["listing", "display_order"]
 
 
 @admin.register(PropertyImage)
 class PropertyImageAdmin(admin.ModelAdmin):
-    list_display = [
-        "listing",
-        "display_order",
-        "original_url",
-        "cdn_url",
-        "thumbnail_url",
-    ]
+    list_display = ["listing", "display_order", "alt_text", "created_at"]
     list_select_related = ["listing"]
     ordering = ["listing", "display_order"]

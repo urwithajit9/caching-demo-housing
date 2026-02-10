@@ -13,6 +13,7 @@ wrong on purpose.
 
 from django.db import models
 import builtins
+from cloudinary.models import CloudinaryField
 
 
 # =============================================================================
@@ -198,15 +199,29 @@ class Property(models.Model):
 # Fetching all images for a property = full table scan on this table.
 # =============================================================================
 class PropertyImage(models.Model):
+    """
+    Images for a property listing.
+
+    The image field uses CloudinaryField instead of Django's ImageField.
+    This automatically uploads to Cloudinary and stores the Cloudinary URL.
+    """
     listing = models.ForeignKey(
         Property,
         on_delete=models.CASCADE,
         related_name="images",
         db_index=False,  # No index. Intentional. Full scan on image fetch.
     )
-    original_url = models.URLField(max_length=1024)
-    thumbnail_url = models.URLField(max_length=1024, null=True, blank=True)
-    cdn_url = models.URLField(max_length=1024, null=True, blank=True)
+    # original_url = models.URLField(max_length=1024)
+    # thumbnail_url = models.URLField(max_length=1024, null=True, blank=True)
+    # cdn_url = models.URLField(max_length=1024, null=True, blank=True)
+    image = CloudinaryField(
+        'image',
+        folder='housing/properties',  # Organize in Cloudinary folders
+        transformation={
+            'quality': 'auto',  # Automatic quality optimization
+            'fetch_format': 'auto',  # Automatic format selection (WebP, AVIF, etc.)
+        }
+    )
     display_order = models.IntegerField(default=0)
     alt_text = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -218,11 +233,52 @@ class PropertyImage(models.Model):
     def __str__(self):
         return f"Image {self.display_order} for {self.listing.title}"
 
-    @builtins.property
-    def best_url(self):
+    # @builtins.property
+    # def best_url(self):
+    #     """
+    #     Returns the best available URL for this image.
+    #     Priority: cdn_url (fastest) → thumbnail_url → original_url (fallback).
+    #     This method becomes the caching decision point in a later part.
+    #     """
+    #     return self.cdn_url or self.thumbnail_url or self.original_url
+
+    def get_original_url(self):
         """
-        Returns the best available URL for this image.
-        Priority: cdn_url (fastest) → thumbnail_url → original_url (fallback).
-        This method becomes the caching decision point in a later part.
+        Returns the original uploaded image URL.
         """
-        return self.cdn_url or self.thumbnail_url or self.original_url
+        if self.image:
+            return self.image.url
+        return None
+
+    def get_thumbnail_url(self, width=400, height=300):
+        """
+        Returns a thumbnail URL with Cloudinary transformations.
+        Cloudinary generates this on-demand — no separate file is stored.
+        """
+        if not self.image:
+            return None
+
+        # Build transformation string
+        # w_400,h_300,c_fill = width 400px, height 300px, fill mode (crop to fit)
+        return self.image.build_url(
+            transformation=[
+                {"width": width, "height": height, "crop": "fill"},
+                {"quality": "auto"},
+                {"fetch_format": "auto"},
+            ]
+        )
+
+    def get_webp_url(self):
+        """
+        Returns a WebP version of the image.
+        WebP is 25-35% smaller than JPEG for the same visual quality.
+        """
+        if not self.image:
+            return None
+
+        return self.image.build_url(
+            transformation=[
+                {"fetch_format": "webp"},
+                {"quality": "auto"},
+            ]
+        )
