@@ -1,18 +1,19 @@
 /**
  * lib/api.ts
  *
- * Centralized API configuration.
- * Handles the URL difference between server-side (Docker) and client-side (browser).
+ * Updated to use environment variables for production.
  */
 
-// Determine the base URL based on where the code is running
 const getBaseURL = () => {
-  // Check if we're running on the server (Node.js) or in the browser
+  // In production, use the environment variable
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // Development: differentiate server vs client
   if (typeof window === "undefined") {
-    // Server-side: use the Docker service name
     return "http://backend:8000";
   }
-  // Client-side: use localhost
   return "http://localhost:8000";
 };
 
